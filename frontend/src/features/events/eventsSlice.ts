@@ -17,7 +17,7 @@ export const createEvent = createAsyncThunk(
     return response.data;
   }
 );
-
+// ✏️ UPDATE event
 export const updateEvent = createAsyncThunk(
   "events/updateEvent",
   async (event: {
@@ -34,6 +34,7 @@ export const updateEvent = createAsyncThunk(
   }
 );
 
+// ➖ DELETE event
 export const deleteEvent = createAsyncThunk(
   "events/deleteEvent",
   async (id: number) => {
@@ -79,7 +80,7 @@ const eventsSlice = createSlice({
         state.items.push(action.payload);
       })
 
-      //UPDATE
+      // ✏️ UPDATE
       .addCase(updateEvent.fulfilled, (state, action) => {
         const index = state.items.findIndex(
             (e) => e.id === action.payload.id
@@ -89,7 +90,7 @@ const eventsSlice = createSlice({
         }
       })
 
-      // DELETE
+      // ➖ DELETE
       .addCase(deleteEvent.fulfilled, (state, action) => {
         state.items = state.items.filter(
             (event) => event.id !== action.payload
