@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchEvents, createEvent } from "./features/events/eventsSlice";
-import type { RootState, AppDispatch } from "./app/store";
+import {
+  fetchEvents,
+  createEvent,
+  deleteEvent,
+} from "./features/events/eventsSlice";
+import Timeline from "./components/Timeline";
+import { useAppDispatch, useAppSelector } from "./hooks/storeHooks";
 
 function App() {
-  const dispatch = useDispatch<AppDispatch>();
-  const events = useSelector((state: RootState) => state.events.items);
+  const dispatch = useAppDispatch();
+  const events = useAppSelector((state) => state.events.items);
 
   const [title, setTitle] = useState("");
 
@@ -25,7 +29,7 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "20px", border: "4px solid #29b81c" }}>
       <h1>Events</h1>
 
       <input
@@ -39,9 +43,28 @@ function App() {
         {events.map((event) => (
           <li key={event.id}>
             {event.title} - {new Date(event.date).toLocaleDateString()}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm("Are you sure?")) {
+                  dispatch(deleteEvent(event.id));
+                }
+              }}
+              style={{
+                marginTop: "8px",
+                background: "red",
+                color: "white",
+                border: "none",
+                padding: "4px 8px",
+                cursor: "pointer",
+              }}
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>
+      <Timeline />
     </div>
   );
 }

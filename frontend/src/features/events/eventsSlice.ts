@@ -18,7 +18,31 @@ export const createEvent = createAsyncThunk(
   }
 );
 
-interface Event {
+export const updateEvent = createAsyncThunk(
+  "events/updateEvent",
+  async (event: {
+    id: number;
+    title: string;
+    description: string;
+    date: string;
+  }) => {
+    const response = await axios.put(
+      `http://localhost:3000/events/${event.id}`,
+      event
+    );
+    return response.data;
+  }
+);
+
+export const deleteEvent = createAsyncThunk(
+  "events/deleteEvent",
+  async (id: number) => {
+    await axios.delete(`http://localhost:3000/events/${id}`);
+    return id;
+  }
+);
+
+export interface Event {
   id: number;
   title: string;
   description: string;
@@ -53,8 +77,25 @@ const eventsSlice = createSlice({
       // CREATE
       .addCase(createEvent.fulfilled, (state, action) => {
         state.items.push(action.payload);
+      })
+
+      //UPDATE
+      .addCase(updateEvent.fulfilled, (state, action) => {
+        const index = state.items.findIndex(
+            (e) => e.id === action.payload.id
+        );
+        if (index !== -1) {
+            state.items[index] = action.payload;
+        }
+      })
+
+      // DELETE
+      .addCase(deleteEvent.fulfilled, (state, action) => {
+        state.items = state.items.filter(
+            (event) => event.id !== action.payload
+        );
       });
-  },
+    }
 });
 
 export default eventsSlice.reducer;
