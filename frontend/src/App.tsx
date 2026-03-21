@@ -43,7 +43,6 @@ function App() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "auto 1fr" }}>
       <div>
-        <h1>Events</h1>
         <form
           id="event-form"
           name="event-form"
@@ -158,6 +157,7 @@ function App() {
         </ul>
       </div>
       <div
+        id="timeline-container-1"
         style={{
           width: "100%",
           height: "100vh",

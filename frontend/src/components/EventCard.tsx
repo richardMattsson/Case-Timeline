@@ -9,10 +9,11 @@ interface EventCardProps {
 
 const EventCard = ({ event }: EventCardProps) => {
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState<Omit<Event, "id">>({
+    date: new Date().toISOString(),
     title: "",
     description: "",
-    date: "",
+    category: "milestone",
   });
   const dispatch = useAppDispatch();
   return (
@@ -29,33 +30,45 @@ const EventCard = ({ event }: EventCardProps) => {
       {editingId === event.id ? (
         <>
           <input
-            value={formData.title}
-            onChange={(e) =>
-              setFormData({ ...formData, title: e.target.value })
-            }
-          />
-          <input
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
-          />
-          <input
             type="date"
-            value={formData.date || ""}
+            value={form.date || ""}
             onChange={(e) => {
               e.stopPropagation();
-              setFormData({ ...formData, date: e.target.value });
+              setForm({ ...form, date: e.target.value });
             }}
           />
+          <input
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
+          <input
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+
+          <label htmlFor="category">Category:</label>
+          <select
+            name="category"
+            onChange={(e) =>
+              setForm({
+                ...form,
+                category: e.target.value as Event["category"],
+              })
+            }
+          >
+            <option value={"milestone"}>milestone</option>
+            <option value={"release"}>release</option>
+            <option value={"incident"}>incident</option>
+          </select>
+
           <button
             onClick={(e) => {
               e.stopPropagation();
               dispatch(
                 updateEvent({
-                  ...formData,
+                  ...form,
                   id: event.id,
-                  date: new Date(formData.date).toISOString(),
+                  date: form.date,
                 }),
               );
               setEditingId(null);
@@ -75,10 +88,11 @@ const EventCard = ({ event }: EventCardProps) => {
             onClick={(e) => {
               e.stopPropagation();
               setEditingId(event.id);
-              setFormData({
+              setForm({
+                date: event.date.slice(0, 10),
                 title: event.title,
                 description: event.description,
-                date: event.date.slice(0, 10),
+                category: event.category,
               });
             }}
           >
