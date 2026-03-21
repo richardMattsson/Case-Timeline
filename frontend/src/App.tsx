@@ -1,5 +1,5 @@
 import { ParentSize } from "@visx/responsive";
-import NewTimeline from "./components/NewTimeline";
+import NewTimeline from "./components/NewTimeline/NewTimeline";
 import { useAppDispatch, useAppSelector } from "./hooks/storeHooks";
 import { useEffect, useState } from "react";
 import {
@@ -13,7 +13,13 @@ function App() {
   const dispatch = useAppDispatch();
   const events = useAppSelector((state) => state.events.items);
 
-  const [title, setTitle] = useState("");
+  const [form, setForm] = useState<Omit<Event, "id">>({
+    date: new Date().toISOString(),
+    title: "",
+    description: "",
+    category: "milestone",
+  });
+
   useEffect(() => {
     dispatch(fetchEvents());
   }, [dispatch]);
@@ -21,28 +27,113 @@ function App() {
   const handleCreate = () => {
     dispatch(
       createEvent({
-        title,
-        description: "Test description",
-        date: new Date().toISOString(),
+        date: form.date,
+        title: form.title,
+        description: form.description,
+        category: form.category,
       }),
     );
-    setTitle("");
+    setForm({
+      date: new Date().toISOString(),
+      title: "",
+      description: "",
+      category: "milestone",
+    });
   };
   return (
-    <div style={{ display: "flex" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "auto 1fr" }}>
       <div>
         <h1>Events</h1>
+        <form
+          id="event-form"
+          name="event-form"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 5,
+            padding: 15,
+            border: "1px solid grey",
+            borderRadius: 15,
+          }}
+        >
+          <label htmlFor="title">Title:</label>
+          <input
+            autoFocus
+            name="title"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            placeholder="Event title"
+          />
+          <label htmlFor="date">Date:</label>
+          <input
+            name="date"
+            type="date"
+            value={form.date}
+            onChange={(e) => setForm({ ...form, date: e.target.value })}
+          />
+          <label htmlFor="description">Description:</label>
+          <input
+            name="description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Event Description"
+          />
+          <label htmlFor="category">Category:</label>
+          <select
+            name="category"
+            onChange={(e) =>
+              setForm({
+                ...form,
+                category: e.target.value as Event["category"],
+              })
+            }
+          >
+            <option value={"milestone"}>milestone</option>
+            <option value={"release"}>release</option>
+            <option value={"incident"}>incident</option>
+          </select>
 
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Event title"
-        />
-        <button onClick={handleCreate}>Add</button>
+          <button
+            disabled={form.title === ""}
+            type="submit"
+            style={{
+              width: 75,
+              alignSelf: "center",
+              padding: 2,
+              marginTop: 15,
+              backgroundColor: "green",
+              color: "white",
+              borderRadius: 15,
+              border: "1px solid black",
+              boxShadow: "2px 4px 6px grey",
+              cursor: "pointer",
+            }}
+            onClick={handleCreate}
+          >
+            Add
+          </button>
+        </form>
 
-        <ul>
+        <ul
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 5,
+            padding: 10,
+            border: "1px solid grey",
+            borderRadius: 15,
+          }}
+        >
           {events.map((event: Event) => (
-            <li key={event.id}>
+            <li
+              key={event.id}
+              style={{
+                display: "flex",
+                gap: 5,
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               {event.title} - {new Date(event.date).toLocaleDateString()}
               <button
                 onClick={(e) => {

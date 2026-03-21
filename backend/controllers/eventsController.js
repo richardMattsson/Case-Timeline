@@ -11,13 +11,14 @@ export const getEvents = async (req, res) => {
 };
 
 export const createEvent = async (req, res) => {
-  const { title, description, date } = req.body;
+  const { date, title, description, category } = req.body;
 
   try {
     const event = await eventsService.createEvent(
+      date,
       title,
       description,
-      date
+      category,
     );
 
     res.status(201).json(event);
@@ -29,10 +30,16 @@ export const createEvent = async (req, res) => {
 
 export const updateEvent = async (req, res) => {
   const { id } = req.params;
-  const { title, description, date } = req.body;
+  const { date, title, description, category } = req.body;
 
   try {
-    const event = await eventsService.updateEvent(id, title, description, date);
+    const event = await eventsService.updateEvent(
+      id,
+      date,
+      title,
+      description,
+      category,
+    );
     res.json(event);
   } catch (err) {
     console.error(err);

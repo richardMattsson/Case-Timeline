@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+
 import eventsRoutes from "./routes/eventsRoutes.js";
 
 const app = express();

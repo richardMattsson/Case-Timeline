@@ -5,8 +5,8 @@ import { timeFormat } from "d3-time-format";
 import { TooltipWithBounds, useTooltip } from "@visx/tooltip";
 import { useState } from "react";
 import { Group } from "@visx/group";
-import { useAppSelector } from "../hooks/storeHooks";
-import type { Event } from "../features/events/eventsSlice";
+import { useAppSelector } from "../../hooks/storeHooks";
+import type { Event } from "../../features/events/eventsSlice";
 
 // Canvas dimensions
 const MIN_EVENT_SPACING = 80; // minimum pixels between events
@@ -16,17 +16,9 @@ interface TimelineProps {
   width: number;
 }
 
-// interface TimelineEvent {
-//   id: string;
-//   date: Date;
-//   label: string;
-//   description: string;
-//   category: "milestone" | "release" | "incident";
-// }
-
 const formatDate = timeFormat("%b %Y"); // → "Jan 2024", "Oct 2024"
 
-// const categoryColor: Record<TimelineEvent["category"], string> = {
+// const categoryColor: Record<Event["category"], string> = {
 //   milestone: "#4caf50",
 //   release: "#1976d2",
 //   incident: "#e53935",
