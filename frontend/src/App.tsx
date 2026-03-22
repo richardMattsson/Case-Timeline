@@ -8,10 +8,15 @@ import {
   fetchEvents,
 } from "./features/events/eventsSlice";
 import type { Event } from "./features/events/eventsSlice";
+import FilterPanel from "./components/FilterPanel/FilterPanel";
 
 function App() {
   const dispatch = useAppDispatch();
   const events = useAppSelector((state) => state.events.items);
+
+  const [orientation, setOrientation] = useState<"horizontal" | "vertical">(
+    "vertical",
+  );
 
   const [form, setForm] = useState<Omit<Event, "id">>({
     date: new Date().toISOString(),
@@ -43,6 +48,7 @@ function App() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "auto 1fr" }}>
       <div>
+        <FilterPanel setOrientation={setOrientation} />
         <form
           id="event-form"
           name="event-form"
@@ -162,13 +168,14 @@ function App() {
           width: "100%",
           height: "100vh",
           maxWidth: "100%",
-          padding: "40px",
           boxSizing: "border-box",
           overflowY: "auto",
         }}
       >
         <ParentSize debounceTime={10}>
-          {({ width }) => <NewTimeline width={width} />}
+          {({ width }) => (
+            <NewTimeline width={width} orientation={orientation} />
+          )}
         </ParentSize>
       </div>
     </div>

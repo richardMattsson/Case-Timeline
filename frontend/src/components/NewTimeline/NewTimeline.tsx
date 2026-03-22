@@ -2,12 +2,14 @@ import { scaleTime } from "@visx/scale";
 import { extent } from "d3-array";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { timeFormat } from "d3-time-format";
-import { TooltipWithBounds, useTooltip } from "@visx/tooltip";
+import { useTooltip, useTooltipInPortal, defaultStyles } from "@visx/tooltip";
+import { localPoint } from "@visx/event";
 import { useEffect, useRef, useState } from "react";
 import { Group } from "@visx/group";
 import { useAppSelector } from "../../hooks/storeHooks";
 import type { Event } from "../../features/events/eventsSlice";
 import { Line } from "@visx/shape";
+import SelectedEvent from "./SelectedEvent";
 
 // Canvas dimensions
 const MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
@@ -15,6 +17,7 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 interface TimelineProps {
   width: number;
+  orientation: "horizontal" | "vertical";
 }
 
 const formatDate = timeFormat("%b %d, %Y");
@@ -25,17 +28,14 @@ const categoryColor: Record<Event["category"], string> = {
   incident: "#e53935",
 };
 
-export default function NewTimeline({ width }: TimelineProps) {
+export default function NewTimeline({ width, orientation }: TimelineProps) {
   const events = useAppSelector((state) => state.events.items);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [orientation, setOrientation] = useState<"horizontal" | "vertical">(
-    "vertical",
-  );
-  const containerRef = useRef<HTMLDivElement>(null);
+  const divContainerRef = useRef<HTMLDivElement>(null);
   const [pixelsPerDay, setPixelsPerDay] = useState(10);
 
   useEffect(() => {
-    const el = containerRef.current;
+    const el = divContainerRef.current;
     if (!el) return;
 
     const handleWheel = (e: WheelEvent) => {
@@ -94,14 +94,15 @@ export default function NewTimeline({ width }: TimelineProps) {
     tooltipOpen,
   } = useTooltip<Event>();
 
+  const { containerRef, TooltipInPortal } = useTooltipInPortal({
+    scroll: true,
+    detectBounds: true,
+  });
+
   return (
     <div>
-      <div style={{ display: "flex", flexDirection: "column", width: "100px" }}>
-        <button onClick={() => setOrientation("horizontal")}>Horizontal</button>
-        <button onClick={() => setOrientation("vertical")}>Vertical</button>
-      </div>
       <div
-        ref={containerRef}
+        ref={divContainerRef}
         id="timeline-container-2"
         style={{
           position: "relative",
@@ -111,11 +112,7 @@ export default function NewTimeline({ width }: TimelineProps) {
           overflowY: "hidden",
         }}
       >
-        <svg
-          width={WIDTH}
-          height={HEIGHT}
-          // style={{ border: "1px solid black" }}
-        >
+        <svg width={WIDTH} height={HEIGHT} ref={containerRef}>
           <Group left={MARGIN.left} top={MARGIN.top}>
             {events.map((e, i) => {
               const isRight = i % 2 === 0;
@@ -180,16 +177,15 @@ export default function NewTimeline({ width }: TimelineProps) {
                 />
 
                 <AxisLeft
-                  left={centerX} // A left pixel offset applied to the entire axis.
-                  scale={timeScale} // The scale used to position ticks and labels.
-                  tickFormat={(date) => formatDate(date as Date)} // Format function for tick labels
-                  // numTicks={numTicks} // Approximate number of ticks to display
+                  left={centerX}
+                  scale={timeScale}
+                  tickFormat={(date) => formatDate(date as Date)}
                   tickValues={tickValues}
-                  tickLength={10} // Length of the tick lines
-                  stroke="#ccc" // Color of the axis line
-                  tickStroke="#ccc" // Color of the tick lines
+                  tickLength={10}
+                  stroke="#ccc"
+                  tickStroke="#ccc"
                   tickLabelProps={() => ({
-                    fill: "#666",
+                    fill: "#fff",
                     fontSize: 11,
                     fontWeight: 600,
                     textAnchor: "end",
@@ -210,12 +206,11 @@ export default function NewTimeline({ width }: TimelineProps) {
                 <AxisBottom
                   top={centerY}
                   scale={timeScale}
-                  tickFormat={(date) => formatDate(date as Date)} // Format function for tick labels
-                  // numTicks={5} // Approximate number of ticks to display
+                  tickFormat={(date) => formatDate(date as Date)}
                   tickValues={tickValues}
-                  tickLength={10} // Length of the tick lines
-                  stroke="#ccc" // Color of the axis line
-                  tickStroke="#ccc" // Color of the tick lines
+                  tickLength={10}
+                  stroke="#ccc"
+                  tickStroke="#ccc"
                   tickLabelProps={() => ({
                     fill: "#666",
                     fontSize: 11,
@@ -229,9 +224,9 @@ export default function NewTimeline({ width }: TimelineProps) {
               </>
             )}
 
-            {/* Layer 3: circles (on top of everything) */}
-            {events.map((e, i) => {
-              const isRight = i % 2 === 0;
+            {/* Layer 3: circles */}
+            {events.map((e) => {
+              // const isRight = i % 2 === 0;
               return (
                 <Group
                   key={`dot-${e.id}`}
@@ -258,19 +253,10 @@ export default function NewTimeline({ width }: TimelineProps) {
                       setSelectedEvent((prev) => (prev?.id === e.id ? null : e))
                     }
                     onMouseEnter={(event) => {
-                      const { clientX, clientY } = event;
+                      const point = localPoint(event);
                       showTooltip({
-                        tooltipLeft:
-                          orientation === "vertical"
-                            ? isRight
-                              ? clientX - 190
-                              : clientX + 20
-                            : clientX - 40,
-
-                        tooltipTop:
-                          orientation === "vertical"
-                            ? clientY - 40
-                            : clientY - 100,
+                        tooltipLeft: point?.x ?? 0,
+                        tooltipTop: point?.y ?? 0,
                         tooltipData: e,
                       });
                     }}
@@ -283,92 +269,20 @@ export default function NewTimeline({ width }: TimelineProps) {
         </svg>
 
         {selectedEvent && (
-          <div
-            style={{
-              position: "fixed",
-              top: 24,
-              left: 24,
-              zIndex: 100,
-              padding: "20px 24px",
-              background: "#fff",
-              border: `2px solid ${categoryColor[selectedEvent.category]}`,
-              borderRadius: 12,
-              fontFamily: "monospace",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-              maxWidth: 300,
-              minWidth: 200,
-            }}
-          >
-            {/* Category badge */}
-            <div
-              style={{
-                display: "inline-block",
-                fontSize: 10,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                padding: "3px 10px",
-                borderRadius: 20,
-                background: categoryColor[selectedEvent.category],
-                color: "#fff",
-                marginBottom: 12,
-              }}
-            >
-              {selectedEvent.title}
-            </div>
-
-            {/* Title */}
-            <div
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: "#1a1a2e",
-                marginBottom: 6,
-              }}
-            >
-              {selectedEvent.title}
-            </div>
-
-            {/* Date */}
-            <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
-              {new Date(selectedEvent.date).toLocaleDateString()}
-            </div>
-
-            {/* Description */}
-            <div style={{ fontSize: 14, color: "#444", lineHeight: 1.6 }}>
-              {selectedEvent.description}
-            </div>
-
-            {/* Close button */}
-            <button
-              onClick={() => setSelectedEvent(null)}
-              style={{
-                marginTop: 16,
-                padding: "6px 14px",
-                border: `1px solid ${categoryColor[selectedEvent.category]}`,
-                borderRadius: 6,
-                background: "transparent",
-                cursor: "pointer",
-                fontFamily: "monospace",
-                fontSize: 12,
-                color: "#111",
-              }}
-            >
-              close ✕
-            </button>
-          </div>
+          <SelectedEvent
+            event={selectedEvent}
+            handleClose={() => setSelectedEvent(null)}
+          />
         )}
 
         {tooltipOpen && tooltipData && (
-          <TooltipWithBounds
-            left={tooltipLeft}
+          <TooltipInPortal
             top={tooltipTop}
+            left={tooltipLeft}
             style={{
-              background: "#fff",
-              color: "#111",
-              maxWidth: 300,
-              padding: "10px 14px",
-              position: "fixed",
+              ...defaultStyles,
               border: `1px solid ${categoryColor[tooltipData.category]}`,
+              color: "#222",
               borderRadius: 8,
               fontSize: 13,
               fontFamily: "monospace",
@@ -383,7 +297,7 @@ export default function NewTimeline({ width }: TimelineProps) {
               {new Date(tooltipData.date).toLocaleDateString()}
             </div>
             {/* <div style={{ opacity: 0.9 }}>{tooltipData.description}</div> */}
-          </TooltipWithBounds>
+          </TooltipInPortal>
         )}
       </div>
     </div>
