@@ -11,14 +11,13 @@ import { Line } from "@visx/shape";
 
 // Canvas dimensions
 const MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
-
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 interface TimelineProps {
   width: number;
 }
 
-const formatDate = timeFormat("%b %d, %Y"); // → "Jan 2024", "Oct 2024"
+const formatDate = timeFormat("%b %d, %Y");
 
 const categoryColor: Record<Event["category"], string> = {
   milestone: "#4caf50",
