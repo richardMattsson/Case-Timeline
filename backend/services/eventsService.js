@@ -1,4 +1,11 @@
-import pool from "../db/db.js";
+import { Pool } from "pg";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const pool = new Pool({
+  connectionString: process.env.PGURI,
+});
 
 export const getEvents = async () => {
   const result = await pool.query("SELECT * FROM events ORDER BY date ASC");

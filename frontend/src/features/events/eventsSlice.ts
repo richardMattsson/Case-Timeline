@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/events";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export interface Event {
   id: number;
@@ -30,10 +30,7 @@ export const createEvent = createAsyncThunk(
 export const updateEvent = createAsyncThunk(
   "events/updateEvent",
   async (event: Event) => {
-    const response = await axios.put(
-      `http://localhost:3000/events/${event.id}`,
-      event,
-    );
+    const response = await axios.put(`${API_URL}/${event.id}`, event);
     return response.data;
   },
 );
@@ -42,7 +39,7 @@ export const updateEvent = createAsyncThunk(
 export const deleteEvent = createAsyncThunk(
   "events/deleteEvent",
   async (id: number) => {
-    await axios.delete(`http://localhost:3000/events/${id}`);
+    await axios.delete(`${API_URL}/${id}`);
     return id;
   },
 );
