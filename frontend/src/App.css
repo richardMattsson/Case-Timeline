@@ -1,1 +1,10 @@
+.home-container {
+  display: flex;
+  flex-direction: row;
+}
 
+@media (max-width: 800px) {
+  .home-container {
+    flex-direction: column-reverse;
+  }
+}

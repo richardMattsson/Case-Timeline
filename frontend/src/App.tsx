@@ -9,6 +9,7 @@ import {
 } from "./features/events/eventsSlice";
 import type { Event } from "./features/events/eventsSlice";
 import FilterPanel from "./components/FilterPanel/FilterPanel";
+import "./App.css";
 
 function App() {
   const dispatch = useAppDispatch();
@@ -46,8 +47,8 @@ function App() {
     });
   };
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "auto 1fr" }}>
-      <div>
+    <div className="home-container">
+      <div style={{ minWidth: "300px" }}>
         <FilterPanel setOrientation={setOrientation} />
         <form
           id="event-form"
@@ -165,6 +166,7 @@ function App() {
       <div
         id="timeline-container-1"
         style={{
+          flexGrow: 1,
           width: "100%",
           height: "100vh",
           maxWidth: "100%",
