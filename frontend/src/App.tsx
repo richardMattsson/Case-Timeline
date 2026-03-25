@@ -11,9 +11,15 @@ import type { Event } from "./features/events/eventsSlice";
 import FilterPanel from "./components/FilterPanel/FilterPanel";
 import "./App.css";
 
+const initialBorderColor = "rgb(24, 41, 187)";
+const onMouseEnterColor = "rgb(28, 84, 203)";
+
 function App() {
   const dispatch = useAppDispatch();
   const events = useAppSelector((state) => state.events.items);
+
+  const [width, setWidth] = useState<number>();
+  const [color, setColor] = useState(initialBorderColor);
 
   const [orientation, setOrientation] = useState<"horizontal" | "vertical">(
     "vertical",
@@ -29,6 +35,26 @@ function App() {
   useEffect(() => {
     dispatch(fetchEvents());
   }, [dispatch]);
+
+  function handleMouseDown(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    setColor(onMouseEnterColor);
+    const initialWidth = width;
+    const initialMouseXPosition = e.clientX;
+
+    function onMouseMove(mouseEvent: MouseEvent) {
+      setColor(onMouseEnterColor);
+      const newWidth =
+        (initialWidth || 350) + (mouseEvent.clientX - initialMouseXPosition);
+      if (newWidth > 200) setWidth(newWidth);
+    }
+    function onMouseUp() {
+      setColor(initialBorderColor);
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    }
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }
 
   const handleCreate = () => {
     dispatch(
@@ -48,8 +74,14 @@ function App() {
   };
   return (
     <div className="home-container">
-      <div style={{ minWidth: "300px" }}>
+      <div
+        style={{
+          width: width,
+          minHeight: "100%",
+        }}
+      >
         <FilterPanel setOrientation={setOrientation} />
+
         <form
           id="event-form"
           name="event-form"
@@ -119,7 +151,6 @@ function App() {
             Add
           </button>
         </form>
-
         <ul
           style={{
             display: "flex",
@@ -164,11 +195,30 @@ function App() {
         </ul>
       </div>
       <div
+        onMouseDown={(e) => handleMouseDown(e)}
+        onMouseOver={() => setColor(onMouseEnterColor)}
+        onMouseOut={() => setColor(initialBorderColor)}
+        className="divider"
+        style={{
+          minHeight: "100%",
+          width: "10px",
+          paddingRight: "5px",
+          paddingLeft: "5px",
+          marginLeft: 15,
+          cursor: "col-resize",
+          resize: "horizontal",
+        }}
+      >
+        <div
+          style={{ minHeight: "100%", width: "3px", backgroundColor: color }}
+        ></div>
+      </div>
+      <div
         id="timeline-container-1"
         style={{
           flexGrow: 1,
           width: "100%",
-          height: "100vh",
+          minHeight: "100%",
           maxWidth: "100%",
           boxSizing: "border-box",
           overflowY: "auto",

@@ -10,14 +10,27 @@ function FilterPanel({ setOrientation }: Props) {
       style={{
         display: "flex",
         justifyContent: "center",
-        width: "100%",
         alignItems: "center",
         gap: 15,
         padding: 10,
+        marginTop: 10,
+        marginBottom: 15,
+        border: "1px solid grey",
+        borderRadius: 10,
       }}
     >
-      <button onClick={() => setOrientation("horizontal")}>Horizontal</button>
-      <button onClick={() => setOrientation("vertical")}>Vertical</button>
+      <button
+        style={{ width: "80px" }}
+        onClick={() => setOrientation("horizontal")}
+      >
+        Horizontal
+      </button>
+      <button
+        style={{ width: "80px" }}
+        onClick={() => setOrientation("vertical")}
+      >
+        Vertical
+      </button>
     </div>
   );
 }
