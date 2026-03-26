@@ -205,7 +205,7 @@ function App() {
           paddingRight: "5px",
           paddingLeft: "5px",
           marginLeft: 15,
-          cursor: "col-resize",
+          cursor: "ew-resize",
           resize: "horizontal",
         }}
       >

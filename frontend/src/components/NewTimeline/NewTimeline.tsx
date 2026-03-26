@@ -8,8 +8,9 @@ import { useEffect, useRef, useState } from "react";
 import { Group } from "@visx/group";
 import { useAppSelector } from "../../hooks/storeHooks";
 import type { Event } from "../../features/events/eventsSlice";
-import { Line } from "@visx/shape";
+import { Circle, Line } from "@visx/shape";
 import SelectedEvent from "./SelectedEvent";
+import { Text } from "@visx/text";
 
 // Canvas dimensions
 const MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
@@ -70,7 +71,6 @@ export default function NewTimeline({ width, orientation }: TimelineProps) {
 
   const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
   const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
-  const centerX = innerWidth / 2;
   const centerY = innerHeight;
 
   const domain = minDate ? [minDate, maxDate] : [new Date(), new Date()];
@@ -114,6 +114,7 @@ export default function NewTimeline({ width, orientation }: TimelineProps) {
       >
         <svg width={WIDTH} height={HEIGHT} ref={containerRef}>
           <Group left={MARGIN.left} top={MARGIN.top}>
+            {/* Layer 1: Text */}
             {events.map((e, i) => {
               const isRight = i % 2 === 0;
               return (
@@ -121,7 +122,7 @@ export default function NewTimeline({ width, orientation }: TimelineProps) {
                   key={`connector-${e.id}`}
                   left={
                     orientation === "vertical"
-                      ? centerX
+                      ? 40
                       : timeScale(new Date(e.date))
                   }
                   top={
@@ -130,30 +131,23 @@ export default function NewTimeline({ width, orientation }: TimelineProps) {
                       : centerY
                   }
                 >
-                  <text
-                    x={orientation === "vertical" ? (isRight ? 100 : -100) : 0}
+                  <Text
+                    x={orientation === "vertical" ? 120 : 0}
                     y={orientation === "vertical" ? 0 : isRight ? -105 : -85}
                     dominantBaseline="middle"
-                    textAnchor={
-                      orientation === "vertical"
-                        ? isRight
-                          ? "start"
-                          : "end"
-                        : "middle"
-                    }
+                    textAnchor={orientation === "vertical" ? "start" : "middle"}
                     fontSize={11}
                     fontFamily="monospace"
                     fill="#9ca3af"
                   >
                     {e.title}
-                  </text>
+                  </Text>
                   {orientation === "vertical" ? (
                     <Line
-                      from={{ x: isRight ? 8 : -8, y: 0 }}
-                      to={{ x: isRight ? 95 : -95, y: 0 }}
-                      stroke="#ccc"
+                      from={{ x: 55, y: 0 }}
+                      to={{ x: 115, y: 0 }}
+                      stroke="#cccccc6a"
                       strokeWidth={1}
-                      strokeDasharray="4 3"
                     />
                   ) : (
                     <Line
@@ -167,17 +161,18 @@ export default function NewTimeline({ width, orientation }: TimelineProps) {
               );
             })}
 
+            {/* Layer 2: Axis */}
             {orientation === "vertical" ? (
               <>
                 <Line
-                  from={{ x: centerX, y: 0 }}
-                  to={{ x: centerX, y: innerHeight }}
+                  from={{ x: 80, y: 0 }}
+                  to={{ x: 80, y: innerHeight }}
                   stroke="#ccc"
                   strokeWidth={2}
                 />
 
                 <AxisLeft
-                  left={centerX}
+                  left={80}
                   scale={timeScale}
                   tickFormat={(date) => formatDate(date as Date)}
                   tickValues={tickValues}
@@ -232,7 +227,7 @@ export default function NewTimeline({ width, orientation }: TimelineProps) {
                   key={`dot-${e.id}`}
                   left={
                     orientation === "vertical"
-                      ? centerX
+                      ? 80
                       : timeScale(new Date(e.date))
                   }
                   top={
@@ -241,7 +236,7 @@ export default function NewTimeline({ width, orientation }: TimelineProps) {
                       : centerY
                   }
                 >
-                  <circle
+                  <Circle
                     cx={0}
                     cy={0}
                     r={selectedEvent?.id === e.id ? 10 : 7}
