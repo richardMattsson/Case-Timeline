@@ -45,6 +45,7 @@ function App() {
       setColor(onMouseEnterColor);
       const newWidth =
         (initialWidth || 350) + (mouseEvent.clientX - initialMouseXPosition);
+
       if (newWidth > 200) setWidth(newWidth);
     }
     function onMouseUp() {
