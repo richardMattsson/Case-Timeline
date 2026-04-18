@@ -226,8 +226,12 @@ function App() {
         }}
       >
         <ParentSize debounceTime={10}>
-          {({ width }) => (
-            <NewTimeline width={width} orientation={orientation} />
+          {({ width, height }) => (
+            <NewTimeline
+              width={width}
+              height={height}
+              orientation={orientation}
+            />
           )}
         </ParentSize>
       </div>
