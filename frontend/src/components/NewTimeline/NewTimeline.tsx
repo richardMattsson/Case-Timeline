@@ -4,7 +4,7 @@ import { AxisBottom, AxisLeft } from "@visx/axis";
 import { timeFormat } from "d3-time-format";
 import { useTooltip, useTooltipInPortal, defaultStyles } from "@visx/tooltip";
 import { localPoint } from "@visx/event";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Group } from "@visx/group";
 import { useAppSelector } from "../../hooks/storeHooks";
 import type { Event } from "../../features/events/eventsSlice";
@@ -12,6 +12,15 @@ import { Circle, Line } from "@visx/shape";
 import SelectedEvent from "./SelectedEvent";
 import { Text } from "@visx/text";
 import { Zoom } from "@visx/zoom";
+import type { ProvidedZoom } from "@visx/zoom/lib/types";
+import type { TransformMatrix } from "@visx/zoom/lib/types";
+
+type ZoomState = {
+  initialTransformMatrix: TransformMatrix;
+  transformMatrix: TransformMatrix;
+  isDragging: boolean;
+};
+type ZoomRenderProps = ProvidedZoom<SVGSVGElement> & ZoomState;
 
 // Canvas dimensions
 const MARGIN = { top: 40, right: 40, bottom: 40, left: 160 };
@@ -20,6 +29,7 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 interface TimelineProps {
   width: number;
   height: number;
+  activeFilters: Set<"milestone" | "release" | "incident">;
   orientation: "horizontal" | "vertical";
 }
 
@@ -34,28 +44,17 @@ const categoryColor: Record<Event["category"], string> = {
 export default function NewTimeline({
   width,
   height,
+  activeFilters,
   orientation,
 }: TimelineProps) {
   const events = useAppSelector((state) => state.events.items);
+  const activeEvents =
+    activeFilters.size === 0
+      ? events
+      : events.filter((e) => activeFilters.has(e.category));
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const divContainerRef = useRef<HTMLDivElement>(null);
-  const [pixelsPerDay, setPixelsPerDay] = useState(10);
-
-  useEffect(() => {
-    const el = divContainerRef.current;
-    if (!el) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey) return;
-      e.preventDefault();
-      setPixelsPerDay((prev) =>
-        Math.max(0.5, Math.min(50, prev * (e.deltaY < 0 ? 1.1 : 0.9))),
-      );
-    };
-
-    el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => el.removeEventListener("wheel", handleWheel);
-  }, []);
+  const [pixelsPerDay, setPixelsPerDay] = useState(2);
+  const [value, setValue] = useState<number>(28);
 
   const dates = events
     .map((e) => new Date(e.date))
@@ -63,16 +62,36 @@ export default function NewTimeline({
 
   const [minDate, maxDate] = extent(dates);
 
-  function handleIcreasePixelsPerDay() {
-    setPixelsPerDay((prev) => prev + 100);
-  }
-
-  function handleDecreasePixelsPerDay() {
-    if (pixelsPerDay > 100) setPixelsPerDay((prev) => prev - 100);
-  }
-
   function resetPixelsPerDay() {
-    setPixelsPerDay(10);
+    setPixelsPerDay(2);
+  }
+
+  function handleZoom(
+    e: React.ChangeEvent<HTMLInputElement>,
+    zoom: ZoomRenderProps,
+  ) {
+    const sliderValue = Number(e.target.value);
+    setValue(sliderValue);
+    const scale = 0.5 + (sliderValue / 100) * 3.5;
+    const {
+      scaleX: currentScale,
+      translateX: currentTx,
+      translateY: currentTy,
+    } = zoom.transformMatrix;
+    const cx = width / 2;
+    const cy = height / 2;
+    zoom.setTransformMatrix({
+      ...zoom.transformMatrix,
+      scaleX: scale,
+      scaleY: scale,
+      translateX: cx + (currentTx - cx) * (scale / currentScale),
+      translateY: cy + (currentTy - cy) * (scale / currentScale),
+    });
+  }
+
+  function handleResetZoom(zoom: ZoomRenderProps) {
+    zoom.reset();
+    setValue(28);
   }
 
   const totalDays =
@@ -80,17 +99,16 @@ export default function NewTimeline({
       ? (maxDate.getTime() - minDate.getTime()) / MS_PER_DAY
       : 0;
 
-  const HEIGHT =
-    orientation === "vertical"
-      ? Math.max(height, totalDays * pixelsPerDay)
-      : height;
   const WIDTH =
-    orientation === "horizontal"
-      ? Math.max(width, totalDays * pixelsPerDay)
-      : width;
+    orientation === "horizontal" ? width + totalDays * pixelsPerDay : width;
 
-  const innerHeight = height - MARGIN.top - MARGIN.bottom + pixelsPerDay;
-  const innerWidth = width - MARGIN.left - MARGIN.right + pixelsPerDay;
+  const HEIGHT =
+    orientation === "horizontal"
+      ? height
+      : Math.max(height, totalDays * pixelsPerDay);
+
+  const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
+  const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
   const centerY = (height - MARGIN.top - MARGIN.bottom) / 2;
 
   const domain = minDate ? [minDate, maxDate] : [new Date(), new Date()];
@@ -103,9 +121,7 @@ export default function NewTimeline({
     range: [MARGIN.top, innerHeight],
   });
   const timeScale =
-    orientation === "horizontal"
-      ? horizontalScale.nice()
-      : verticalScale.nice();
+    orientation === "horizontal" ? horizontalScale : verticalScale;
 
   const numTicks =
     orientation === "vertical"
@@ -139,7 +155,6 @@ export default function NewTimeline({
   return (
     <div
       id="timeline-container-2"
-      ref={containerRef}
       style={{
         height: height,
         width: width,
@@ -155,6 +170,15 @@ export default function NewTimeline({
         scaleXMax={4}
         scaleYMin={1 / 2}
         scaleYMax={4}
+        wheelDelta={(event) => {
+          event.preventDefault();
+          setPixelsPerDay((prev) =>
+            event.deltaY < 0
+              ? Math.min(200, prev * 1.05)
+              : Math.max(2, prev * 0.95),
+          );
+          return { scaleX: 1, scaleY: 1 }; // keep zoom matrix unchanged
+        }}
         initialTransformMatrix={initialTransform}
       >
         {(zoom) => (
@@ -166,15 +190,38 @@ export default function NewTimeline({
             }}
             ref={containerRef}
           >
-            <div>{zoom.toString()}</div>
-            <button onClick={() => zoom.reset()}>Reset</button>
-            <button onClick={handleIcreasePixelsPerDay}>Increase</button>
-            <span>{pixelsPerDay}</span>
-            <button onClick={handleDecreasePixelsPerDay}>Decrease</button>
+            <button onClick={() => handleResetZoom(zoom)}>Reset</button>
+            <button
+              onClick={() =>
+                setPixelsPerDay((prev) => Math.min(200, prev * 1.5))
+              }
+            >
+              +
+            </button>
+
+            <button
+              onClick={() => setPixelsPerDay((prev) => Math.max(2, prev * 0.5))}
+            >
+              -
+            </button>
             <button onClick={resetPixelsPerDay}>ResetPixelPerDay</button>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={value ?? 50}
+              onChange={(e) => handleZoom(e, zoom)}
+            />
+            <div>
+              <span>
+                totalDays: {totalDays} pixelsPerDay: {pixelsPerDay}
+              </span>
+            </div>
+            <hr />
             <svg
-              width={width}
-              height={height}
+              width={WIDTH}
+              height={HEIGHT}
               style={{
                 cursor: zoom.isDragging ? "grabbing" : "grab",
                 touchAction: "none",
@@ -183,7 +230,7 @@ export default function NewTimeline({
             >
               <Group transform={zoom.toString()}>
                 {/* Layer 1: Text */}
-                {events.map((e, i) => {
+                {activeEvents.map((e, i) => {
                   // console.log(e.title, timeScale(new Date(e.date)));
                   const isRight = i % 2 === 0;
                   return (
@@ -213,7 +260,7 @@ export default function NewTimeline({
                         fontFamily="monospace"
                         fill="#9ca3af"
                       >
-                        {e.title}
+                        {`${e.title}`}
                       </Text>
                       {orientation === "vertical" ? (
                         <Line
@@ -283,17 +330,17 @@ export default function NewTimeline({
                         fill: "#666",
                         fontSize: 11,
                         fontWeight: 600,
-                        textAnchor: "end",
+                        textAnchor: "middle",
                         fontFamily: "monospace",
-                        dx: "5.5em",
-                        dy: "0.3em",
+                        dx: "0",
+                        dy: "0.5em",
                       })}
                     />
                   </>
                 )}
 
                 {/* Layer 3: circles */}
-                {events.map((e) => {
+                {activeEvents.map((e) => {
                   // const isRight = i % 2 === 0;
                   return (
                     <Group

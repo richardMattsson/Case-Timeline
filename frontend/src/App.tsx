@@ -25,6 +25,10 @@ function App() {
     "vertical",
   );
 
+  const [activeFilters, setActiveFilters] = useState<Set<Event["category"]>>(
+    new Set(),
+  );
+
   const [form, setForm] = useState<Omit<Event, "id">>({
     date: new Date().toISOString(),
     title: "",
@@ -81,7 +85,10 @@ function App() {
           minHeight: "100%",
         }}
       >
-        <FilterPanel setOrientation={setOrientation} />
+        <FilterPanel
+          setOrientation={setOrientation}
+          setActiveFilters={setActiveFilters}
+        />
 
         <form
           id="event-form"
@@ -95,6 +102,7 @@ function App() {
             borderRadius: 15,
           }}
         >
+          <label>Create new event</label>
           <label htmlFor="title">Title:</label>
           <input
             autoFocus
@@ -230,6 +238,7 @@ function App() {
             <NewTimeline
               width={width}
               height={height}
+              activeFilters={activeFilters}
               orientation={orientation}
             />
           )}
