@@ -1,5 +1,5 @@
 import { ParentSize } from "@visx/responsive";
-import NewTimeline from "./components/NewTimeline/NewTimeline";
+// import NewTimeline from "./components/NewTimeline/NewTimeline";
 import { useAppDispatch, useAppSelector } from "./hooks/storeHooks";
 import { useEffect, useState } from "react";
 import {
@@ -8,8 +8,9 @@ import {
   fetchEvents,
 } from "./features/events/eventsSlice";
 import type { Event } from "./features/events/eventsSlice";
-import FilterPanel from "./components/FilterPanel/FilterPanel";
+// import FilterPanel from "./components/FilterPanel/FilterPanel";
 import "./App.css";
+import AlternativeTimeline from "./components/AlternativeTimeline";
 
 const initialBorderColor = "rgb(24, 41, 187)";
 const onMouseEnterColor = "rgb(28, 84, 203)";
@@ -21,13 +22,13 @@ function App() {
   const [width, setWidth] = useState<number>();
   const [color, setColor] = useState(initialBorderColor);
 
-  const [orientation, setOrientation] = useState<"horizontal" | "vertical">(
-    "vertical",
-  );
+  // const [orientation, setOrientation] = useState<"horizontal" | "vertical">(
+  //   "vertical",
+  // );
 
-  const [activeFilters, setActiveFilters] = useState<Set<Event["category"]>>(
-    new Set(),
-  );
+  // const [activeFilters, setActiveFilters] = useState<Set<Event["category"]>>(
+  //   new Set(),
+  // );
 
   const [form, setForm] = useState<Omit<Event, "id">>({
     date: new Date().toISOString(),
@@ -85,10 +86,10 @@ function App() {
           minHeight: "100%",
         }}
       >
-        <FilterPanel
+        {/* <FilterPanel
           setOrientation={setOrientation}
           setActiveFilters={setActiveFilters}
-        />
+        /> */}
 
         <form
           id="event-form"
@@ -233,7 +234,7 @@ function App() {
           overflowY: "auto",
         }}
       >
-        <ParentSize debounceTime={10}>
+        {/* <ParentSize debounceTime={10}>
           {({ width, height }) => (
             <NewTimeline
               width={width}
@@ -241,6 +242,11 @@ function App() {
               activeFilters={activeFilters}
               orientation={orientation}
             />
+          )}
+        </ParentSize> */}
+        <ParentSize debounceTime={10}>
+          {({ width, height }) => (
+            <AlternativeTimeline width={width} height={height} />
           )}
         </ParentSize>
       </div>
