@@ -166,11 +166,11 @@ export default function NewTimeline({
       <Zoom<SVGSVGElement>
         width={width}
         height={height}
-        scaleXMin={1 / 2}
-        scaleXMax={4}
-        scaleYMin={1 / 2}
-        scaleYMax={4}
-        wheelDelta={(event) => {
+        // scaleXMin={1 / 2}
+        // scaleXMax={4}
+        // scaleYMin={1 / 2}
+        // scaleYMax={4}
+        wheelDelta={(event: WheelEvent | React.WheelEvent<Element>) => {
           event.preventDefault();
           setPixelsPerDay((prev) =>
             event.deltaY < 0
@@ -181,7 +181,7 @@ export default function NewTimeline({
         }}
         initialTransformMatrix={initialTransform}
       >
-        {(zoom) => (
+        {(zoom: ProvidedZoom<SVGSVGElement> & ZoomState) => (
           <div
             style={{
               position: "relative",
@@ -190,6 +190,7 @@ export default function NewTimeline({
             }}
             ref={containerRef}
           >
+            <div style={{display: "flex"}}>
             <button onClick={() => handleResetZoom(zoom)}>Reset</button>
             <button
               onClick={() =>
@@ -213,11 +214,12 @@ export default function NewTimeline({
               value={value ?? 50}
               onChange={(e) => handleZoom(e, zoom)}
             />
-            <div>
+            </div>
+            {/* <div>
               <span>
                 totalDays: {totalDays} pixelsPerDay: {pixelsPerDay}
               </span>
-            </div>
+            </div> */}
             <hr />
             <svg
               width={WIDTH}
