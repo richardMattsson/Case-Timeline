@@ -7,10 +7,7 @@ import {
   fetchEvents,
 } from "./features/events/eventsSlice";
 import type { Event } from "./features/events/eventsSlice";
-// import FilterPanel from "./components/FilterPanel/FilterPanel";
 import "./App.css";
-// import AlternativeTimeline from "./components/AlternativeTimeline";
-// import NewTimeline from "./components/NewTimeline/NewTimeline";
 import FilterPanel from "./components/FilterPanel/FilterPanel";
 import NewTimelineCopy from "./components/NewTimeline/NewTimelineCopy";
 
@@ -246,11 +243,6 @@ function App() {
             />
           )}
         </ParentSize>
-        {/* <ParentSize debounceTime={10}>
-          {({ width, height }) => (
-            <AlternativeTimeline width={width} height={height} />
-          )}
-        </ParentSize> */}
       </div>
     </div>
   );
