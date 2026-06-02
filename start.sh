@@ -2,7 +2,7 @@
 
 # Start Docker containers
 echo "Starting Docker containers..."
-docker compose start
+docker compose up -d db
 
 # Start backend with nodemon in background
 echo "Starting backend..."

@@ -18,8 +18,8 @@ import {
 } from "./timelineUtils";
 import { IconButton, Stack } from "@mui/joy";
 import { AutorenewOutlined } from "@mui/icons-material";
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 
 interface TimelineProps {
   width: number;
@@ -142,8 +142,18 @@ export default function NewTimelineCopy({
                 >
                   <AutorenewOutlined />
                 </IconButton>
-                <IconButton variant="solid" onClick={() => zoomInRef.current?.()}><AddIcon /></IconButton>
-                <IconButton variant="solid" onClick={() => zoomOutRef.current?.()}><RemoveIcon /></IconButton>
+                <IconButton
+                  variant="solid"
+                  onClick={() => zoomInRef.current?.()}
+                >
+                  <AddIcon />
+                </IconButton>
+                <IconButton
+                  variant="solid"
+                  onClick={() => zoomOutRef.current?.()}
+                >
+                  <RemoveIcon />
+                </IconButton>
               </Stack>
               <svg
                 width={width}
