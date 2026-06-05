@@ -1,6 +1,6 @@
 import { ParentSize } from "@visx/responsive";
 import { useAppDispatch, useAppSelector } from "./hooks/storeHooks";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   createEvent,
   deleteEvent,
@@ -10,16 +10,17 @@ import type { Event } from "./features/events/eventsSlice";
 import "./App.css";
 import FilterPanel from "./components/FilterPanel/FilterPanel";
 import NewTimelineCopy from "./components/NewTimeline/NewTimelineCopy";
+import type { ZoomControls } from "./components/NewTimeline/timelineUtils";
 
-const initialBorderColor = "rgb(24, 41, 187)";
-const onMouseEnterColor = "rgb(28, 84, 203)";
+// const initialBorderColor = "rgb(24, 41, 187)";
+// const onMouseEnterColor = "rgb(28, 84, 203)";
 
 function App() {
   const dispatch = useAppDispatch();
   const events = useAppSelector((state) => state.events.items);
 
-  const [width, setWidth] = useState<number>();
-  const [color, setColor] = useState(initialBorderColor);
+  // const [width, setWidth] = useState<number>();
+  // const [color, setColor] = useState(initialBorderColor);
 
   const [orientation, setOrientation] = useState<"horizontal" | "vertical">(
     "vertical",
@@ -28,6 +29,7 @@ function App() {
   const [activeFilters, setActiveFilters] = useState<Set<Event["category"]>>(
     new Set(),
   );
+  const zoomControlsRef = useRef<ZoomControls | null>(null);
 
   const [form, setForm] = useState<Omit<Event, "id">>({
     date: new Date().toISOString(),
@@ -40,26 +42,26 @@ function App() {
     dispatch(fetchEvents());
   }, [dispatch]);
 
-  function handleMouseDown(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    setColor(onMouseEnterColor);
-    const initialWidth = width;
-    const initialMouseXPosition = e.clientX;
+  // function handleMouseDown(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  //   setColor(onMouseEnterColor);
+  //   const initialWidth = width;
+  //   const initialMouseXPosition = e.clientX;
 
-    function onMouseMove(mouseEvent: MouseEvent) {
-      setColor(onMouseEnterColor);
-      const newWidth =
-        (initialWidth || 350) + (mouseEvent.clientX - initialMouseXPosition);
+  //   function onMouseMove(mouseEvent: MouseEvent) {
+  //     setColor(onMouseEnterColor);
+  //     const newWidth =
+  //       (initialWidth || 350) + (mouseEvent.clientX - initialMouseXPosition);
 
-      if (newWidth > 200) setWidth(newWidth);
-    }
-    function onMouseUp() {
-      setColor(initialBorderColor);
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    }
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  }
+  //     if (newWidth > 200) setWidth(newWidth);
+  //   }
+  //   function onMouseUp() {
+  //     setColor(initialBorderColor);
+  //     document.removeEventListener("mousemove", onMouseMove);
+  //     document.removeEventListener("mouseup", onMouseUp);
+  //   }
+  //   document.addEventListener("mousemove", onMouseMove);
+  //   document.addEventListener("mouseup", onMouseUp);
+  // }
 
   const handleCreate = () => {
     dispatch(
@@ -77,31 +79,25 @@ function App() {
       category: "milestone",
     });
   };
+
   return (
     <div className="home-container">
       <div
+        className="form-container"
         style={{
-          width: width,
+          width: "100%",
           minHeight: "100%",
         }}
       >
         <FilterPanel
           setOrientation={setOrientation}
           setActiveFilters={setActiveFilters}
+          onReset={() => zoomControlsRef.current?.reset()}
+          onZoomIn={() => zoomControlsRef.current?.zoomIn()}
+          onZoomOut={() => zoomControlsRef.current?.zoomOut()}
         />
 
-        <form
-          id="event-form"
-          name="event-form"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 5,
-            padding: 15,
-            border: "1px solid grey",
-            borderRadius: 15,
-          }}
-        >
+        <form id="event-form" name="event-form">
           <label>Create new event</label>
           <label htmlFor="title">Title:</label>
           <input
@@ -144,42 +140,27 @@ function App() {
             disabled={form.title === ""}
             type="submit"
             style={{
-              width: 75,
+              width: 100,
               alignSelf: "center",
-              padding: 2,
+              paddingTop: 5,
+              paddingBottom: 5,
+              paddingLeft: 10,
+              paddingRight: 10,
               marginTop: 15,
-              backgroundColor: "green",
               color: "white",
-              borderRadius: 15,
-              border: "1px solid black",
-              boxShadow: "2px 4px 6px grey",
+              borderRadius: 5,
+              border: "none",
+              boxShadow: "2px 2px grey",
               cursor: "pointer",
             }}
             onClick={handleCreate}
           >
-            Add
+            Add event
           </button>
         </form>
-        <ul
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 5,
-            padding: 10,
-            border: "1px solid grey",
-            borderRadius: 15,
-          }}
-        >
+        <ul id="event-list">
           {events.map((event: Event) => (
-            <li
-              key={event.id}
-              style={{
-                display: "flex",
-                gap: 5,
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
+            <li key={event.id} className="event-list-item">
               {event.title} - {new Date(event.date).toLocaleDateString()}
               <button
                 onClick={(e) => {
@@ -189,7 +170,6 @@ function App() {
                   }
                 }}
                 style={{
-                  marginTop: "8px",
                   background: "red",
                   color: "white",
                   border: "none",
@@ -203,7 +183,8 @@ function App() {
           ))}
         </ul>
       </div>
-      <div
+      <hr id="divider" />
+      {/* <div
         onMouseDown={(e) => handleMouseDown(e)}
         onMouseOver={() => setColor(onMouseEnterColor)}
         onMouseOut={() => setColor(initialBorderColor)}
@@ -221,18 +202,8 @@ function App() {
         <div
           style={{ minHeight: "100%", width: "3px", backgroundColor: color }}
         ></div>
-      </div>
-      <div
-        id="timeline-container-1"
-        style={{
-          flexGrow: 1,
-          width: "100%",
-          minHeight: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-          overflowY: "auto",
-        }}
-      >
+      </div> */}
+      <div id="timeline-container-1">
         <ParentSize debounceTime={10}>
           {({ width, height }) => (
             <NewTimelineCopy
@@ -240,6 +211,7 @@ function App() {
               height={height}
               activeFilters={activeFilters}
               orientation={orientation}
+              zoomControlsRef={zoomControlsRef}
             />
           )}
         </ParentSize>

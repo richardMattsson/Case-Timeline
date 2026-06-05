@@ -4,6 +4,12 @@ import { timeWeek } from "d3-time";
 import type { Event } from "../../features/events/eventsSlice";
 import type { TransformMatrix } from "@visx/zoom/lib/types";
 
+export type ZoomControls = {
+  reset: () => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
+};
+
 export const MARGIN_HORIZONTAL = { top: 0, right: 20, bottom: 80, left: 20 };
 export const MARGIN_VERTICAL = { top: 70, right: 0, bottom: 20, left: 140 };
 export const DEFAULT_TRANSFORM: TransformMatrix = {

@@ -15,17 +15,15 @@ import {
   getTimelineScale,
   MARGIN_HORIZONTAL,
   MARGIN_VERTICAL,
+  type ZoomControls,
 } from "./timelineUtils";
-import { IconButton, Stack } from "@mui/joy";
-import { AutorenewOutlined } from "@mui/icons-material";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
 
 interface TimelineProps {
   width: number;
   height: number;
   activeFilters: Set<"milestone" | "release" | "incident">;
   orientation: "horizontal" | "vertical";
+  zoomControlsRef: React.MutableRefObject<ZoomControls | null>;
 }
 
 const formatDate = timeFormat("%b %d, %Y");
@@ -41,6 +39,7 @@ export default function NewTimelineCopy({
   height,
   activeFilters,
   orientation,
+  zoomControlsRef,
 }: TimelineProps) {
   const events = useAppSelector((state) => state.events.items);
   const activeEvents =
@@ -49,43 +48,10 @@ export default function NewTimelineCopy({
       : events.filter((e) => activeFilters.has(e.category));
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const isVertical = orientation === "vertical";
+
   const zoomResetRef = useRef<(() => void) | null>(null);
   const zoomInRef = useRef<(() => void) | null>(null);
   const zoomOutRef = useRef<(() => void) | null>(null);
-
-  // const dates = events
-  //   .map((e) => new Date(e.date))
-  //   .filter((d) => !isNaN(d.getTime()));
-
-  // const [minDate, maxDate] = extent(dates);
-
-  // function handleZoom(
-  //   e: React.ChangeEvent<HTMLInputElement>,
-  //   zoom: ZoomRenderProps,
-  // ) {
-  //   const sliderValue = Number(e.target.value);
-  //   setValue(sliderValue);
-  //   const scale = 0.5 + (sliderValue / 100) * 3.5;
-  //   const {
-  //     scaleX: currentScale,
-  //     translateX: currentTx,
-  //     translateY: currentTy,
-  //   } = zoom.transformMatrix;
-  //   const cx = width / 2;
-  //   const cy = height / 2;
-  //   zoom.setTransformMatrix({
-  //     ...zoom.transformMatrix,
-  //     scaleX: scale,
-  //     scaleY: scale,
-  //     translateX: cx + (currentTx - cx) * (scale / currentScale),
-  //     translateY: cy + (currentTy - cy) * (scale / currentScale),
-  //   });
-  // }
-
-  // function handleResetZoom(zoom: ZoomRenderProps) {
-  //   zoom.reset();
-  //   setValue(28);
-  // }
   const margin = isVertical ? MARGIN_VERTICAL : MARGIN_HORIZONTAL;
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
@@ -121,6 +87,7 @@ export default function NewTimelineCopy({
         height: height,
         width: width,
         display: "flex",
+        minHeight: "300px",
       }}
     >
       <Zoom<SVGSVGElement> width={width} height={height}>
@@ -133,33 +100,20 @@ export default function NewTimelineCopy({
           zoomOutRef.current = () => {
             zoom.scale({ scaleX: 0.8, scaleY: 0.8 });
           };
+          zoomControlsRef.current = {
+            reset: zoomResetRef.current,
+            zoomIn: zoomInRef.current,
+            zoomOut: zoomOutRef.current,
+          };
+
           return (
             <>
-              <Stack direction={"column"} gap={5} sx={{ width: "fit-content" }}>
-                <IconButton
-                  variant="solid"
-                  onClick={() => zoomResetRef.current?.()}
-                >
-                  <AutorenewOutlined />
-                </IconButton>
-                <IconButton
-                  variant="solid"
-                  onClick={() => zoomInRef.current?.()}
-                >
-                  <AddIcon />
-                </IconButton>
-                <IconButton
-                  variant="solid"
-                  onClick={() => zoomOutRef.current?.()}
-                >
-                  <RemoveIcon />
-                </IconButton>
-              </Stack>
               <svg
                 width={width}
                 height={height}
                 style={{
                   cursor: zoom.isDragging ? "grabbing" : "grab",
+                  touchAction: "none",
                 }}
                 ref={(el) => {
                   (
