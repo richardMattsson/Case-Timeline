@@ -34,6 +34,9 @@ const categoryColor: Record<Event["category"], string> = {
   incident: "#e53935",
 };
 
+const MIN_TIMELINE_WIDTH = 320;
+const MIN_TIMELINE_HEIGHT = 360;
+
 export default function NewTimelineCopy({
   width,
   height,
@@ -52,10 +55,30 @@ export default function NewTimelineCopy({
   const zoomResetRef = useRef<(() => void) | null>(null);
   const zoomInRef = useRef<(() => void) | null>(null);
   const zoomOutRef = useRef<(() => void) | null>(null);
-  const margin = isVertical ? MARGIN_VERTICAL : MARGIN_HORIZONTAL;
-  const innerWidth = width - margin.left - margin.right;
-  const innerHeight = height - margin.top - margin.bottom;
-  const centerY = (height - margin.top - margin.bottom) / 2;
+
+  const svgWidth = Math.max(width || 0, MIN_TIMELINE_WIDTH);
+  const svgHeight = Math.max(height || 0, MIN_TIMELINE_HEIGHT);
+  const isCompact = svgWidth < 600;
+
+  const margin = isVertical
+    ? {
+        ...MARGIN_VERTICAL,
+        top: isCompact ? 48 : MARGIN_VERTICAL.top,
+        left: isCompact ? 88 : MARGIN_VERTICAL.left,
+        bottom: isCompact ? 32 : MARGIN_VERTICAL.bottom,
+      }
+    : {
+        ...MARGIN_HORIZONTAL,
+        left: isCompact ? 12 : MARGIN_HORIZONTAL.left,
+        right: isCompact ? 12 : MARGIN_HORIZONTAL.right,
+        bottom: isCompact ? 56 : MARGIN_HORIZONTAL.bottom,
+      };
+
+  const innerWidth = Math.max(1, svgWidth - margin.left - margin.right);
+  const innerHeight = Math.max(1, svgHeight - margin.top - margin.bottom);
+  const centerY = margin.top + innerHeight / 2;
+  const labelOffset = isCompact ? 48 : 80;
+  const titleFontSize = isCompact ? 10 : 11;
 
   const timeScale = getTimelineScale(
     events,
@@ -64,7 +87,7 @@ export default function NewTimelineCopy({
     isVertical,
   );
 
-  const tickValues = timeScale.ticks(5);
+  const tickValues = timeScale.ticks(isCompact ? 3 : 5);
 
   const {
     showTooltip,
@@ -84,13 +107,14 @@ export default function NewTimelineCopy({
     <div
       id="timeline-container-2"
       style={{
-        height: height,
-        width: width,
+        height: svgHeight,
+        width: "100%",
         display: "flex",
         minHeight: "300px",
+        overflow: "hidden",
       }}
     >
-      <Zoom<SVGSVGElement> width={width} height={height}>
+      <Zoom<SVGSVGElement> width={svgWidth} height={svgHeight}>
         {(zoom) => {
           zoomResetRef.current = () =>
             zoom.setTransformMatrix(DEFAULT_TRANSFORM);
@@ -109,10 +133,14 @@ export default function NewTimelineCopy({
           return (
             <>
               <svg
-                width={width}
-                height={height}
+                width="100%"
+                height={svgHeight}
+                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                preserveAspectRatio="xMinYMin meet"
                 style={{
                   cursor: zoom.isDragging ? "grabbing" : "grab",
+                  display: "block",
+                  maxWidth: "100%",
                   touchAction: "none",
                 }}
                 ref={(el) => {
@@ -139,11 +167,11 @@ export default function NewTimelineCopy({
                         }
                       >
                         <Text
-                          x={isVertical ? 80 : 0}
+                          x={isVertical ? labelOffset : 0}
                           y={isVertical ? 0 : isRight ? -105 : -85}
                           dominantBaseline="middle"
                           textAnchor={isVertical ? "start" : "middle"}
-                          fontSize={11}
+                          fontSize={titleFontSize}
                           fontFamily="monospace"
                           fill="#9ca3af"
                         >
@@ -152,7 +180,7 @@ export default function NewTimelineCopy({
                         {isVertical ? (
                           <Line
                             from={{ x: 0, y: 0 }}
-                            to={{ x: 75, y: 0 }}
+                            to={{ x: labelOffset - 5, y: 0 }}
                             stroke="#cccccc6a"
                             strokeWidth={1}
                           />
@@ -181,7 +209,7 @@ export default function NewTimelineCopy({
                         tickStroke="#ccc"
                         tickLabelProps={() => ({
                           fill: "#fff",
-                          fontSize: 11,
+                          fontSize: titleFontSize,
                           fontWeight: 600,
                           textAnchor: "end",
                           fontFamily: "monospace",
@@ -202,7 +230,7 @@ export default function NewTimelineCopy({
                         tickStroke="#ccc"
                         tickLabelProps={() => ({
                           fill: "#666",
-                          fontSize: 11,
+                          fontSize: titleFontSize,
                           fontWeight: 600,
                           textAnchor: "middle",
                           fontFamily: "monospace",
