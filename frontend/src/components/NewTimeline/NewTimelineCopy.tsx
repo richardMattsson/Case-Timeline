@@ -10,6 +10,7 @@ import { Circle, Line } from "@visx/shape";
 import SelectedEvent from "./SelectedEvent";
 import { Text } from "@visx/text";
 import { Zoom } from "@visx/zoom";
+import type { TransformMatrix } from "@visx/zoom/lib/types";
 import {
   DEFAULT_TRANSFORM,
   getTimelineScale,
@@ -40,6 +41,23 @@ const MIN_ZOOM_SCALE = 0.75;
 const MAX_ZOOM_SCALE = 4;
 const ZOOM_IN_SCALE = 1.1;
 const ZOOM_OUT_SCALE = 0.9;
+const PINCH_ZOOM_IN_SCALE = 1.03;
+const PINCH_ZOOM_OUT_SCALE = 0.97;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function constrainAxisTranslate(translate: number, scale: number, size: number) {
+  const scaledSize = size * scale;
+  const panPadding = Math.min(size * 0.2, 96);
+
+  if (scaledSize <= size) {
+    return (size - scaledSize) / 2;
+  }
+
+  return clamp(translate, size - scaledSize - panPadding, panPadding);
+}
 
 export default function NewTimelineCopy({
   width,
@@ -63,6 +81,22 @@ export default function NewTimelineCopy({
   const svgWidth = Math.max(width || 0, MIN_TIMELINE_WIDTH);
   const svgHeight = Math.max(height || 0, MIN_TIMELINE_HEIGHT);
   const isCompact = svgWidth < 600;
+  const constrainTransform = (transform: TransformMatrix): TransformMatrix => {
+    const scaleX = clamp(transform.scaleX, MIN_ZOOM_SCALE, MAX_ZOOM_SCALE);
+    const scaleY = clamp(transform.scaleY, MIN_ZOOM_SCALE, MAX_ZOOM_SCALE);
+
+    return {
+      ...transform,
+      scaleX,
+      scaleY,
+      translateX: constrainAxisTranslate(transform.translateX, scaleX, svgWidth),
+      translateY: constrainAxisTranslate(
+        transform.translateY,
+        scaleY,
+        svgHeight,
+      ),
+    };
+  };
 
   const margin = isVertical
     ? {
@@ -125,6 +159,17 @@ export default function NewTimelineCopy({
         scaleXMax={MAX_ZOOM_SCALE}
         scaleYMin={MIN_ZOOM_SCALE}
         scaleYMax={MAX_ZOOM_SCALE}
+        constrain={constrainTransform}
+        pinchDelta={({ offset, lastOffset }) => ({
+          scaleX:
+            offset[0] - lastOffset[0] < 0
+              ? PINCH_ZOOM_OUT_SCALE
+              : PINCH_ZOOM_IN_SCALE,
+          scaleY:
+            offset[0] - lastOffset[0] < 0
+              ? PINCH_ZOOM_OUT_SCALE
+              : PINCH_ZOOM_IN_SCALE,
+        })}
       >
         {(zoom) => {
           zoomResetRef.current = () =>
