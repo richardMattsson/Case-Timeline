@@ -35,7 +35,11 @@ const categoryColor: Record<Event["category"], string> = {
 };
 
 const MIN_TIMELINE_WIDTH = 320;
-const MIN_TIMELINE_HEIGHT = 360;
+const MIN_TIMELINE_HEIGHT = 420;
+const MIN_ZOOM_SCALE = 0.75;
+const MAX_ZOOM_SCALE = 4;
+const ZOOM_IN_SCALE = 1.1;
+const ZOOM_OUT_SCALE = 0.9;
 
 export default function NewTimelineCopy({
   width,
@@ -114,15 +118,22 @@ export default function NewTimelineCopy({
         overflow: "hidden",
       }}
     >
-      <Zoom<SVGSVGElement> width={svgWidth} height={svgHeight}>
+      <Zoom<SVGSVGElement>
+        width={svgWidth}
+        height={svgHeight}
+        scaleXMin={MIN_ZOOM_SCALE}
+        scaleXMax={MAX_ZOOM_SCALE}
+        scaleYMin={MIN_ZOOM_SCALE}
+        scaleYMax={MAX_ZOOM_SCALE}
+      >
         {(zoom) => {
           zoomResetRef.current = () =>
             zoom.setTransformMatrix(DEFAULT_TRANSFORM);
           zoomInRef.current = () => {
-            zoom.scale({ scaleX: 1.2, scaleY: 1.2 });
+            zoom.scale({ scaleX: ZOOM_IN_SCALE, scaleY: ZOOM_IN_SCALE });
           };
           zoomOutRef.current = () => {
-            zoom.scale({ scaleX: 0.8, scaleY: 0.8 });
+            zoom.scale({ scaleX: ZOOM_OUT_SCALE, scaleY: ZOOM_OUT_SCALE });
           };
           zoomControlsRef.current = {
             reset: zoomResetRef.current,
@@ -133,10 +144,8 @@ export default function NewTimelineCopy({
           return (
             <>
               <svg
-                width="100%"
+                width={svgWidth}
                 height={svgHeight}
-                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-                preserveAspectRatio="xMinYMin meet"
                 style={{
                   cursor: zoom.isDragging ? "grabbing" : "grab",
                   display: "block",
